@@ -1,0 +1,7 @@
+[main]
+host = https://www.transifex.com
+
+[o:donaldmask:p:donaldmask:r:qt-translation-025x]
+file_filter = src/qt/locale/donaldmask_<lang>.xlf
+source_file = src/qt/locale/donaldmask_en.xlf
+source_lang = en

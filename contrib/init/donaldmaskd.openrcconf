@@ -1,0 +1,33 @@
+# /etc/conf.d/donaldmaskd: config file for /etc/init.d/donaldmaskd
+
+# Config file location
+#DONALDMASKD_CONFIGFILE="/etc/donaldmask/donaldmask.conf"
+
+# What directory to write pidfile to?  (created and owned by $DONALDMASKD_USER)
+#DONALDMASKD_PIDDIR="/var/run/donaldmaskd"
+
+# What filename to give the pidfile
+#DONALDMASKD_PIDFILE="${DONALDMASKD_PIDDIR}/donaldmaskd.pid"
+
+# Where to write donaldmaskd data (be mindful that the blockchain is large)
+#DONALDMASKD_DATADIR="/var/lib/donaldmaskd"
+
+# User and group to own donaldmaskd process
+#DONALDMASKD_USER="donaldmask"
+#DONALDMASKD_GROUP="donaldmask"
+
+# Path to donaldmaskd executable
+#DONALDMASKD_BIN="/usr/bin/donaldmaskd"
+
+# Nice value to run donaldmaskd under
+#DONALDMASKD_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+#DONALDMASKD_OPTS=""
+
+# The timeout in seconds OpenRC will wait for donaldmaskd to terminate
+# after a SIGTERM has been raised.
+# Note that this will be mapped as argument to start-stop-daemon's
+# '--retry' option, which means you can specify a retry schedule
+# here. For more information see man 8 start-stop-daemon.
+DONALDMASKD_SIGTERM_TIMEOUT=600

@@ -1,0 +1,93 @@
+#!/sbin/openrc-run
+
+# backward compatibility for existing gentoo layout 
+#
+if [ -d "/var/lib/donaldmask/.donaldmask" ]; then
+	DONALDMASKD_DEFAULT_DATADIR="/var/lib/donaldmask/.donaldmask"
+else
+	DONALDMASKD_DEFAULT_DATADIR="/var/lib/donaldmaskd"
+fi
+
+DONALDMASKD_CONFIGFILE=${DONALDMASKD_CONFIGFILE:-/etc/donaldmask/donaldmask.conf}
+DONALDMASKD_PIDDIR=${DONALDMASKD_PIDDIR:-/var/run/donaldmaskd}
+DONALDMASKD_PIDFILE=${DONALDMASKD_PIDFILE:-${DONALDMASKD_PIDDIR}/donaldmaskd.pid}
+DONALDMASKD_DATADIR=${DONALDMASKD_DATADIR:-${DONALDMASKD_DEFAULT_DATADIR}}
+DONALDMASKD_USER=${DONALDMASKD_USER:-${DONALDMASK_USER:-donaldmask}}
+DONALDMASKD_GROUP=${DONALDMASKD_GROUP:-donaldmask}
+DONALDMASKD_BIN=${DONALDMASKD_BIN:-/usr/bin/donaldmaskd}
+DONALDMASKD_NICE=${DONALDMASKD_NICE:-${NICELEVEL:-0}}
+DONALDMASKD_OPTS="${DONALDMASKD_OPTS:-${DONALDMASK_OPTS}}"
+
+name="Donaldmask Core Daemon"
+description="Donaldmask cryptocurrency P2P network daemon"
+
+command="/usr/bin/donaldmaskd"
+command_args="-pid=\"${DONALDMASKD_PIDFILE}\" \
+		-conf=\"${DONALDMASKD_CONFIGFILE}\" \
+		-datadir=\"${DONALDMASKD_DATADIR}\" \
+		-daemon \
+		${DONALDMASKD_OPTS}"
+
+required_files="${DONALDMASKD_CONFIGFILE}"
+start_stop_daemon_args="-u ${DONALDMASKD_USER} \
+			-N ${DONALDMASKD_NICE} -w 2000"
+pidfile="${DONALDMASKD_PIDFILE}"
+
+# The retry schedule to use when stopping the daemon. Could be either
+# a timeout in seconds or multiple signal/timeout pairs (like
+# "SIGKILL/180 SIGTERM/300")
+retry="${DONALDMASKD_SIGTERM_TIMEOUT}"
+
+depend() {
+	need localmount net
+}
+
+# verify
+# 1) that the datadir exists and is writable (or create it)
+# 2) that a directory for the pid exists and is writable
+# 3) ownership and permissions on the config file
+start_pre() {
+	checkpath \
+	-d \
+	--mode 0750 \
+	--owner "${DONALDMASKD_USER}:${DONALDMASKD_GROUP}" \
+	"${DONALDMASKD_DATADIR}"
+
+	checkpath \
+	-d \
+	--mode 0755 \
+	--owner "${DONALDMASKD_USER}:${DONALDMASKD_GROUP}" \
+	"${DONALDMASKD_PIDDIR}"
+
+	checkpath -f \
+	-o "${DONALDMASKD_USER}:${DONALDMASKD_GROUP}" \
+	-m 0660 \
+	"${DONALDMASKD_CONFIGFILE}"
+
+	checkconfig || return 1
+}
+
+checkconfig()
+{
+	if grep -qs '^rpcuser=' "${DONALDMASKD_CONFIGFILE}" && \
+		! grep -qs '^rpcpassword=' "${DONALDMASKD_CONFIGFILE}" ; then
+		eerror ""
+		eerror "ERROR: You must set a secure rpcpassword to run donaldmaskd."
+		eerror "The setting must appear in ${DONALDMASKD_CONFIGFILE}"
+		eerror ""
+		eerror "This password is security critical to securing wallets "
+		eerror "and must not be the same as the rpcuser setting."
+		eerror "You can generate a suitable random password using the following "
+		eerror "command from the shell:"
+		eerror ""
+		eerror "bash -c 'tr -dc a-zA-Z0-9 < /dev/urandom | head -c32 && echo'"
+		eerror ""
+		eerror "It is recommended that you also set alertnotify so you are "
+		eerror "notified of problems:"
+		eerror ""
+		eerror "ie: alertnotify=echo %%s | mail -s \"Donaldmask Alert\"" \
+			"admin@foo.com"
+		eerror ""
+		return 1
+	fi
+}

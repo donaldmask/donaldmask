@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+#
+#  donaldmaskd The donaldmask core server.
+#
+#
+# chkconfig: 345 80 20
+# description: donaldmaskd
+# processname: donaldmaskd
+#
+
+# Source function library.
+. /etc/init.d/functions
+
+# you can override defaults in /etc/sysconfig/donaldmaskd, see below
+if [ -f /etc/sysconfig/donaldmaskd ]; then
+        . /etc/sysconfig/donaldmaskd
+fi
+
+RETVAL=0
+
+prog=donaldmaskd
+# you can override the lockfile via DONALDMASKD_LOCKFILE in /etc/sysconfig/donaldmaskd
+lockfile=${DONALDMASKD_LOCKFILE-/var/lock/subsys/donaldmaskd}
+
+# donaldmaskd defaults to /usr/bin/donaldmaskd, override with DONALDMASKD_BIN
+donaldmaskd=${DONALDMASKD_BIN-/usr/bin/donaldmaskd}
+
+# donaldmaskd opts default to -disablewallet, override with DONALDMASKD_OPTS
+donaldmaskd_opts=${DONALDMASKD_OPTS--disablewallet}
+
+start() {
+    echo -n $"Starting $prog: "
+    daemon $DAEMONOPTS $donaldmaskd $donaldmaskd_opts
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch $lockfile
+    return $RETVAL
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    killproc $prog -t600
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && rm -f $lockfile
+    return $RETVAL
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status $prog
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    *)
+        echo "Usage: service $prog {start|stop|status|restart}"
+        exit 1
+        ;;
+esac
